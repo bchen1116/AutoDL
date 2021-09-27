@@ -2,8 +2,8 @@ import time
 import pandas as pd
 from tqdm.auto import tqdm
 import torch
-from search_utils import step_LR, adam_optim, sgd_optim, bce_loss, bce_logit_loss, crossentropy_loss
-from preprocessing import prep_dataloaders
+from AutoDL.search_utils import step_LR, adam_optim, sgd_optim, bce_loss, bce_logit_loss, crossentropy_loss
+from AutoDL.preprocessing import prep_dataloaders
 from torch.nn import DataParallel
 
 
