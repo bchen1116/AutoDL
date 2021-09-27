@@ -32,7 +32,7 @@ def normalize(input_image):
 
 
 def put_data_to_dataloader(data, batch_size, shuffle=True):
-    dataloader = DataLoader(data, batch_size=batch_size, shuffle=shuffle, num_workers=16)
+    dataloader = DataLoader(data, batch_size=batch_size, shuffle=shuffle, num_workers=4)
     return dataloader
 
 
