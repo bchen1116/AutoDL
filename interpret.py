@@ -4,9 +4,9 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 
 def plot_grad_cam(model, input_image_tensor):
     if "VGG" in model.name or "DenseNet" in model.name:
-        target_layer = model.features[-1]
+        target_layer = model.model.features[-1]
     elif "ResNet" in model.name:
-        target_layer = model.layer4[-1]
+        target_layer = model.model.layer4[-1]
     else:
         raise ValueError("Grad Cam only supported for ResNet, VGG, and DenseNet models!")
 
