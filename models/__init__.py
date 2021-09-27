@@ -1,1 +1,1 @@
-from .models import ResNet18, VGG16, DenseNet, Inception, GoogleNet
+from .models import ResNet50, VGG16, DenseNet, Inception, GoogleNet

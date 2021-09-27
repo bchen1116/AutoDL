@@ -29,10 +29,10 @@ class ModelBase():
         return self.model.load_state_dict(self.best_state_dict)
 
 
-class ResNet18(ModelBase):
-    name = "ResNet-18"
+class ResNet50(ModelBase):
+    name = "ResNet-50"
     def __init__(self, pretrained=True):
-        self.model = mod.resnet18(pretrained=pretrained)
+        self.model = mod.resnet50(pretrained=pretrained)
 
 
 class VGG16(ModelBase):
