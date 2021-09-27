@@ -11,7 +11,7 @@ class Search():
     def __init__(self, models: list, train, device='cpu', val_split: float=0.2, batch_size: int=16, shuffle: bool=True, learning_rate: float=0.001):
         self.best_model = None
         self.best_model_score = 0
-        self.results = {}
+        self.results = {"Model": [], "Model Name": [], "Validation Accuracy": []}
         self.models = models
         self.train = train
         self.device = device
@@ -40,7 +40,6 @@ class Search():
 
 
     def train_model(self, model_class, dataloader_dict, criterion, optimizer, scheduler, learning_rate, device, batch_size, num_epochs=10):
-        since = time.time()
         model = model_class.model
 
         model_class.update_best_state_dict()
@@ -48,6 +47,7 @@ class Search():
 
         model = DataParallel(model)
         criterion, optimizer, scheduler = self.make_optims(model, criterion, optimizer, scheduler, learning_rate)
+        since = time.time()
         for epoch in range(num_epochs):
             print('Epoch {}/{}'.format(epoch, num_epochs - 1))
             print('-' * 10)
@@ -99,13 +99,10 @@ class Search():
                     best_acc = epoch_acc
                     model_class.update_best_state_dict()
 
-            print()
-
         time_elapsed = time.time() - since
-        print('Training complete in {:.0f}m {:.0f}s'.format(
-            time_elapsed // 60, time_elapsed % 60))
-        print('Best val Acc: {:4f}'.format(best_acc))
-        print(f'Done with model {model_class.name}')
+        print('{}: Training complete in {:.0f}m {:.0f}s'.format(
+            model_class.name, time_elapsed // 60, time_elapsed % 60))
+        print('Best val Acc: {:4f}'.format(best_acc), "\n")
         return best_acc
 
 
@@ -120,8 +117,8 @@ class Search():
             if acc > self.best_model_score:
                 self.best_model = model
                 self.best_model_score = acc
-            self.results["Accuracy"] = acc
-            self.results["Model Name"] = model.name
-            self.results["Model"] = model
+            self.results["Validation Accuracy"].append(acc)
+            self.results["Model Name"].append(model.name)
+            self.results["Model"].append(model)
         print("Done!")
         
