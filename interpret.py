@@ -1,8 +1,25 @@
 from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
+from numpy import moveaxis
+import matplotlib.pyplot as plt
 
 
-def plot_grad_cam(model, input_image_tensor):
+def unnormalize(input_tensor, multiple=False):
+    mean = [0.485, 0.456, 0.406]
+    std = [0.229, 0.224, 0.225]
+    # now, we can unnormalize all the images
+    for i in range(3):
+        input_tensor[i, :, :] *= std[i]
+        input_tensor[i, :, :]  += mean[i]
+    if multiple:
+        input_tensor = input_tensor.multiply(255)
+        input_tensor = input_tensor.type(torch.int64)
+    return input_tensor
+
+def plot_grad_cams(model, input_image_tensor):
+    rgb_img = unnormalize(input_image_tensor.squeeze(0)).cpu().numpy()
+    rgb_img = moveaxis(rgb_img, 0, 2)
+    input_image_tensor = unnormalize(input_image_tensor.squeeze(0)).unsqueeze(0).cuda()
     if "VGG" in model.name or "DenseNet" in model.name:
         target_layer = model.model.features[-1]
     elif "ResNet" in model.name:
@@ -10,8 +27,11 @@ def plot_grad_cam(model, input_image_tensor):
     else:
         raise ValueError("Grad Cam only supported for ResNet, VGG, and DenseNet models!")
 
-    cam = GradCam(model=model, target_layer=target_layer)
-    grayscale_cam = cam(input_tensor=input_image_tensor, target_category=None)
+    cam = GradCAM(model=model.model, target_layer=target_layer)
+    grayscale_cam = cam(input_tensor=input_image_tensor, target_category=None, eigen_smooth=True, aug_smooth=True)
     grayscale_cam = grayscale_cam[0, :]
     visualization = show_cam_on_image(rgb_img, grayscale_cam)
-    return visualization
+    fig, ax = plt.subplots(1, 2)
+
+    ax[0].imshow(rgb_img)
+    ax[1].imshow(visualization)
