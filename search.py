@@ -139,7 +139,7 @@ class Search():
             if acc > self.best_model_score:
                 self.best_model = model
                 self.best_model_score = acc
-            self.results["Validation Accuracy"].append(acc)
+            self.results["Validation Accuracy"].append(acc.item())
             self.results["Model Name"].append(model.name)
             self.results["Model"].append(model)
 
