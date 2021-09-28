@@ -2,8 +2,8 @@ import time
 import pandas as pd
 from tqdm.auto import tqdm
 import torch
-from AutoDL.search_utils import step_LR, adam_optim, sgd_optim, bce_loss, bce_logit_loss, crossentropy_loss
-from AutoDL.preprocessing import prep_dataloaders
+from search_utils import step_LR, adam_optim, sgd_optim, bce_loss, bce_logit_loss, crossentropy_loss
+from preprocessing import prep_dataloaders, put_data_to_dataloader
 from torch.nn import DataParallel
 
 
@@ -41,8 +41,6 @@ class Search():
 
     def train_model(self, model_class, dataloader_dict, criterion, optimizer, scheduler, learning_rate, device, batch_size, num_epochs=10):
         model = model_class.model
-
-        model_class.update_best_state_dict()
         best_acc = 0.0
 
         model = DataParallel(model)
@@ -63,7 +61,7 @@ class Search():
                 running_corrects = 0
 
                 # Iterate over data.
-                for _, (inputs, labels) in tqdm(enumerate(dataloader_dict[phase])):
+                for _, (inputs, labels) in tqdm(enumerate(dataloader_dict[phase]), total=len(dataloader_dict[phase])):
                     inputs = inputs.to(device)
                     labels = labels.to(device)
 
@@ -106,19 +104,41 @@ class Search():
         return best_acc
 
 
+    def test_model(self, model_class, data, device):
+        dataloader = put_data_to_dataloader(data, batch_size=self.batch_size)
+        model = model_class.model
+        correct = 0
+        total = 0
+
+        model = DataParallel(model)
+        with torch.no_grad():
+            for data in tqdm(dataloader):
+                images, labels = data
+                # calculate outputs by running images through the network
+                outputs = model(images)
+                # the class with the highest energy is what we choose as prediction
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+
+        print('Accuracy of the network on the {} test images: {}%'.format(total, 100 * correct / total))
+
+
     def run_search(self, criterion: str="crossentropy_loss", optimizer: str="adam", scheduler: str="step", num_epochs: int=10):
         best_model = (None, 0)
         self.device = torch.device(self.device)
         print(f"Using {self.device}")
         dataloader_dict = prep_dataloaders(self.train, self.val_split, self.batch_size, self.shuffle)
+
         for model in self.models:
             print(f"Running with model {model.name} using {num_epochs} epochs")
             acc = self.train_model(model, dataloader_dict, criterion, optimizer, scheduler, self.learning_rate, self.device, self.batch_size, num_epochs)
+
             if acc > self.best_model_score:
                 self.best_model = model
                 self.best_model_score = acc
             self.results["Validation Accuracy"].append(acc)
             self.results["Model Name"].append(model.name)
             self.results["Model"].append(model)
+
         print("Done!")
-        
