@@ -39,7 +39,7 @@ class Search():
         return (criterion, optimizer, scheduler)
 
 
-    def train_model(self, model_class, dataloader_dict, criterion, optimizer, scheduler, learning_rate, device, batch_size, num_epochs=10):
+    def train_model(self, model_class, dataloader_dict, criterion, optimizer, scheduler, learning_rate, batch_size, num_epochs=10):
         model = model_class.model
         best_acc = 0.0
 
@@ -62,8 +62,8 @@ class Search():
 
                 # Iterate over data.
                 for _, (inputs, labels) in tqdm(enumerate(dataloader_dict[phase]), total=len(dataloader_dict[phase])):
-                    inputs = inputs.to(device)
-                    labels = labels.to(device)
+                    inputs = inputs.to(self.device)
+                    labels = labels.to(self.device)
 
                     # zero the parameter gradients
                     optimizer.zero_grad()
@@ -104,7 +104,7 @@ class Search():
         return best_acc
 
 
-    def test_model(self, model_class, data, device):
+    def test_model(self, model_class, data):
         dataloader = put_data_to_dataloader(data, batch_size=self.batch_size)
         model = model_class.model
         correct = 0
@@ -114,6 +114,8 @@ class Search():
         with torch.no_grad():
             for data in tqdm(dataloader):
                 images, labels = data
+                images = images.to(self.device)
+                labels = labels.to(self.device)
                 # calculate outputs by running images through the network
                 outputs = model(images)
                 # the class with the highest energy is what we choose as prediction
@@ -132,7 +134,7 @@ class Search():
 
         for model in self.models:
             print(f"Running with model {model.name} using {num_epochs} epochs")
-            acc = self.train_model(model, dataloader_dict, criterion, optimizer, scheduler, self.learning_rate, self.device, self.batch_size, num_epochs)
+            acc = self.train_model(model, dataloader_dict, criterion, optimizer, scheduler, self.learning_rate, self.batch_size, num_epochs)
 
             if acc > self.best_model_score:
                 self.best_model = model
